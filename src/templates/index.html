@@ -454,9 +454,23 @@
 
             // 景点
             if (plan.attractions && plan.attractions.choices) {
-                html += `<div class="section-title">🎯 景点推荐</div>`;
+                html += `<div class="section-title">🎯 景点推荐（${plan.attractions.choices.length}个）</div>`;
                 plan.attractions.choices.forEach((a, i) => {
                     html += `<div class="info-row"><span class="info-label">${i+1}. ${a.name}</span><span class="info-value">${a.type || ''} | ⭐${a.rating || ''} | 门票¥${a.price || 0}</span></div>`;
+                    if (a.description) {
+                        html += `<div style="padding-left:30px;color:#666;font-size:0.9rem;margin-bottom:8px;">${a.description}</div>`;
+                    }
+                });
+            }
+
+            // 午餐推荐
+            if (plan.lunch && plan.lunch.choices) {
+                html += `<div class="section-title">🍽️ 午餐推荐</div>`;
+                plan.lunch.choices.forEach((r, i) => {
+                    html += `<div class="info-row"><span class="info-label">${i+1}. ${r.name}</span><span class="info-value">${r.cuisine || ''} | 人均¥${r.avg_price || 0} | ⭐${r.rating || ''}</span></div>`;
+                    if (r.specialties && r.specialties.length > 0) {
+                        html += `<div style="padding-left:30px;color:#666;font-size:0.9rem;margin-bottom:8px;">推荐菜品：${r.specialties.join('、')}</div>`;
+                    }
                 });
             }
 

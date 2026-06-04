@@ -5,7 +5,7 @@
 import json
 from typing import Dict, Any
 from .base_agent import BaseAgent
-from tools import search_hotels, search_restaurants
+from tools import search_hotels, search_restaurants, search_attractions
 from memory import get_memory_manager
 
 
@@ -93,8 +93,8 @@ class AccommodationAgent(BaseAgent):
                     "facilities": h.get("facilities", []),
                 })
 
-            # 2. 直接调用工具获取餐厅数据
-            restaurants_result = json.loads(search_restaurants(destination, 3))
+            # 2. 直接调用工具获取餐厅数据（包含早餐、午餐、晚餐推荐）
+            restaurants_result = json.loads(search_restaurants(destination, 5))
             restaurants = []
             for r in restaurants_result:
                 restaurants.append({
@@ -106,14 +106,27 @@ class AccommodationAgent(BaseAgent):
                     "address": r.get("address", ""),
                 })
 
-            # 3. 获取用户偏好（如果有的话）
+            # 3. 直接调用工具获取景点数据（7个景点）
+            attractions_result = json.loads(search_attractions(destination, 7))
+            attractions = []
+            for a in attractions_result:
+                attractions.append({
+                    "name": a["name"],
+                    "type": a["type"],
+                    "price": a["price"],
+                    "rating": a["rating"],
+                    "description": a.get("description", ""),
+                })
+
+            # 4. 获取用户偏好（如果有的话）
             pref_text = self.memory_manager.inject_preferences_to_prompt(
-                user_id, f"{destination}旅行住宿餐饮"
+                user_id, f"{destination}旅行住宿餐饮景点"
             )
 
             accommodation_info = {
                 "hotels": hotels,
                 "restaurants": restaurants,
+                "attractions": attractions,
                 "check_in": check_in,
                 "check_out": check_out,
                 "days": days,
