@@ -10,6 +10,8 @@ from datetime import datetime
 # 导入扩展城市数据
 from .city_data import EXTENDED_CITY_DB
 from .city_data_v2 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V2
+from .city_data_v3 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V3
+from .city_data_v4 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V4
 
 
 # 目的地知识库（核心城市）
@@ -746,32 +748,25 @@ DESTINATION_DB = {
 
 def _get_city_data(city: str) -> Dict[str, Any]:
     """获取城市数据，如果没有则生成默认数据"""
-    # 1. 优先在V2扩展知识库中查找（数据最丰富）
-    if city in EXTENDED_CITY_DB_V2:
-        return EXTENDED_CITY_DB_V2[city]
+    # 合并所有数据库，V4 > V3 > V2 > V1 > 核心
+    all_dbs = [
+        EXTENDED_CITY_DB_V4,
+        EXTENDED_CITY_DB_V3,
+        EXTENDED_CITY_DB_V2,
+        EXTENDED_CITY_DB,
+        DESTINATION_DB,
+    ]
 
-    # 2. 在V1扩展知识库中查找
-    if city in EXTENDED_CITY_DB:
-        return EXTENDED_CITY_DB[city]
+    # 1. 精确匹配（按优先级）
+    for db in all_dbs:
+        if city in db:
+            return db[city]
 
-    # 3. 在核心知识库中查找
-    if city in DESTINATION_DB:
-        return DESTINATION_DB[city]
-
-    # 4. 模糊匹配V2扩展知识库
-    for key in EXTENDED_CITY_DB_V2:
-        if key in city or city in key:
-            return EXTENDED_CITY_DB_V2[key]
-
-    # 5. 模糊匹配V1扩展知识库
-    for key in EXTENDED_CITY_DB:
-        if key in city or city in key:
-            return EXTENDED_CITY_DB[key]
-
-    # 6. 模糊匹配核心知识库
-    for key in DESTINATION_DB:
-        if key in city or city in key:
-            return DESTINATION_DB[key]
+    # 2. 模糊匹配（按优先级）
+    for db in all_dbs:
+        for key in db:
+            if key in city or city in key:
+                return db[key]
 
     # 7. 生成默认数据（增加餐厅和景点数量）
     return {
