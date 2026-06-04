@@ -107,7 +107,7 @@ class AccommodationAgent(BaseAgent):
                 })
 
             # 3. 直接调用工具获取景点数据（12个景点）
-            attractions_result = json.loads(search_attractions(destination, 12))
+            attractions_result = json.loads(search_attractions(destination, 15))
             attractions = []
             for a in attractions_result:
                 attractions.append({
