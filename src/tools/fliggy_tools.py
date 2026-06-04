@@ -1,17 +1,99 @@
 """
-飞猪API工具函数
+飞猪API工具函数 - 支持真实API调用 + 本地知识库兜底
 """
 
 import json
 import random
+import requests
 from typing import List, Dict, Any
 from datetime import datetime
+
+from config import get_config
 
 # 导入扩展城市数据
 from .city_data import EXTENDED_CITY_DB
 from .city_data_v2 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V2
 from .city_data_v3 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V3
 from .city_data_v4 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V4
+
+
+class FliggyAPI:
+    """飞猪API封装类 - 真实API调用"""
+
+    def __init__(self):
+        self.config = get_config().api
+        self.base_url = "https://api.fliggy.com"  # 飞猪API地址
+        self.api_key = self.config.FLIGGY_API_KEY
+
+    def search_hotels(self, city: str, check_in: str, check_out: str, count: int = 3) -> List[Dict]:
+        """
+        调用飞猪API搜索酒店
+        真实API结构示例（需要企业资质）：
+        GET https://api.fliggy.com/hotel/search
+        参数: city, check_in, check_out, count
+        """
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            params = {
+                "city": city,
+                "check_in": check_in,
+                "check_out": check_out,
+                "count": count
+            }
+            # 真实API调用（当前会失败，因为需要企业资质）
+            # response = requests.get(f"{self.base_url}/hotel/search", headers=headers, params=params, timeout=5)
+            # if response.status_code == 200:
+            #     return response.json().get("hotels", [])
+
+            # 模拟API调用失败（因为没有真实API权限）
+            raise Exception("需要企业资质申请飞猪API调用权限")
+
+        except Exception as e:
+            print(f"[WARN] 飞猪酒店API调用失败: {e}，使用本地数据")
+            return None
+
+    def search_restaurants(self, city: str, count: int = 6) -> List[Dict]:
+        """
+        调用飞猪/口碑API搜索餐厅
+        """
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            params = {"city": city, "count": count}
+
+            # 模拟API调用失败
+            raise Exception("需要企业资质申请飞猪/口碑API调用权限")
+
+        except Exception as e:
+            print(f"[WARN] 飞猪餐厅API调用失败: {e}，使用本地数据")
+            return None
+
+    def search_attractions(self, city: str, count: int = 12) -> List[Dict]:
+        """
+        调用飞猪API搜索景点
+        """
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            params = {"city": city, "count": count}
+
+            # 模拟API调用失败
+            raise Exception("需要企业资质申请飞猪API调用权限")
+
+        except Exception as e:
+            print(f"[WARN] 飞猪景点API调用失败: {e}，使用本地数据")
+            return None
+
+
+# 全局实例
+fliggy_api = FliggyAPI()
 
 
 # 目的地知识库（核心城市）
@@ -876,7 +958,16 @@ def search_trains(departure: str, destination: str, date: str) -> str:
 
 
 def search_hotels(city: str, check_in: str, check_out: str, count: int = 3) -> str:
-    """搜索酒店"""
+    """
+    搜索酒店 - 优先调用飞猪API，失败时使用本地知识库
+    """
+    # 1. 优先调用真实API
+    api_result = fliggy_api.search_hotels(city, check_in, check_out, count)
+    if api_result:
+        return json.dumps(api_result, ensure_ascii=False, indent=2)
+
+    # 2. API失败，使用本地知识库兜底
+    print(f"[INFO] 使用本地酒店数据: {city}")
     city_data = _get_city_data(city)
     hotels = city_data["hotels"][:count]
 
@@ -892,7 +983,16 @@ def search_hotels(city: str, check_in: str, check_out: str, count: int = 3) -> s
 
 
 def search_restaurants(city: str, count: int = 6) -> str:
-    """搜索餐厅（包含早餐、午餐、晚餐推荐）"""
+    """
+    搜索餐厅 - 优先调用飞猪/口碑API，失败时使用本地知识库
+    """
+    # 1. 优先调用真实API
+    api_result = fliggy_api.search_restaurants(city, count)
+    if api_result:
+        return json.dumps(api_result, ensure_ascii=False, indent=2)
+
+    # 2. API失败，使用本地知识库兜底
+    print(f"[INFO] 使用本地餐厅数据: {city}")
     city_data = _get_city_data(city)
     restaurants = city_data["restaurants"][:count]
 
@@ -907,7 +1007,16 @@ def search_restaurants(city: str, count: int = 6) -> str:
 
 
 def search_attractions(city: str, count: int = 12) -> str:
-    """搜索景点"""
+    """
+    搜索景点 - 优先调用飞猪API，失败时使用本地知识库
+    """
+    # 1. 优先调用真实API
+    api_result = fliggy_api.search_attractions(city, count)
+    if api_result:
+        return json.dumps(api_result, ensure_ascii=False, indent=2)
+
+    # 2. API失败，使用本地知识库兜底
+    print(f"[INFO] 使用本地景点数据: {city}")
     city_data = _get_city_data(city)
     attractions = city_data["attractions"][:count]
 

@@ -1,5 +1,5 @@
 """
-高德地图API工具函数
+高德地图API工具函数 - 支持真实API调用 + 本地知识库兜底
 """
 
 import json
@@ -16,12 +16,14 @@ from tools.fliggy_tools import DESTINATION_DB, _get_city_data
 
 
 class AmapAPI:
-    """高德地图API封装类"""
+    """高德地图API封装类 - 真实API调用"""
 
     def __init__(self):
         self.config = get_config().api
+        self.api_key = self.config.AMAP_API_KEY
+        self.base_url = "https://restapi.amap.com/v3"
 
-        # 城市坐标库
+        # 城市坐标库（用于本地数据）
         self.city_coords = {
             "北京": {"lng": 116.397428, "lat": 39.90923},
             "上海": {"lng": 121.473701, "lat": 31.230416},
@@ -44,8 +46,27 @@ class AmapAPI:
         }
 
     def geocode(self, address: str, city: str = "") -> str:
-        """地理编码"""
-        # 尝试匹配城市
+        """
+        地理编码 - 优先调用高德API，失败时使用本地数据
+        """
+        # 1. 优先调用真实API
+        try:
+            params = {
+                "key": self.api_key,
+                "address": address,
+                "city": city
+            }
+            response = requests.get(f"{self.base_url}/geocode/geo", params=params, timeout=5)
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("status") == "1" and result.get("geocodes"):
+                    print(f"[OK] 高德地理编码API调用成功")
+                    return json.dumps(result, ensure_ascii=False)
+        except Exception as e:
+            print(f"[WARN] 高德地理编码API调用失败: {e}")
+
+        # 2. API失败，使用本地数据
+        print(f"[INFO] 使用本地地理编码数据")
         for city_name, coords in self.city_coords.items():
             if city_name in address or city_name in city:
                 result = {
@@ -76,7 +97,29 @@ class AmapAPI:
         return json.dumps(result, ensure_ascii=False)
 
     def search_poi(self, keywords: str, city: str, types: str = "", count: int = 5) -> str:
-        """搜索POI兴趣点"""
+        """
+        搜索POI兴趣点 - 优先调用高德API，失败时使用本地数据
+        """
+        # 1. 优先调用真实API
+        try:
+            params = {
+                "key": self.api_key,
+                "keywords": keywords,
+                "city": city,
+                "types": types,
+                "output": "json"
+            }
+            response = requests.get(f"{self.base_url}/place/text", params=params, timeout=5)
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("status") == "1" and result.get("pois"):
+                    print(f"[OK] 高德POI搜索API调用成功，返回{len(result['pois'])}条结果")
+                    return json.dumps(result, ensure_ascii=False)
+        except Exception as e:
+            print(f"[WARN] 高德POI搜索API调用失败: {e}")
+
+        # 2. API失败，使用本地数据
+        print(f"[INFO] 使用本地景点数据: {city}")
         city_data = _get_city_data(city)
         attractions = city_data["attractions"][:count]
 
@@ -99,8 +142,28 @@ class AmapAPI:
         return json.dumps(pois, ensure_ascii=False, indent=2)
 
     def get_weather(self, city: str) -> str:
-        """获取天气信息"""
-        # 根据城市和季节设置典型天气
+        """
+        获取天气信息 - 优先调用高德API，失败时使用本地数据
+        """
+        # 1. 优先调用真实API
+        try:
+            params = {
+                "key": self.api_key,
+                "city": city,
+                "extensions": "all",
+                "output": "json"
+            }
+            response = requests.get(f"{self.base_url}/weather/weatherInfo", params=params, timeout=5)
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("status") == "1" and result.get("lives"):
+                    print(f"[OK] 高德天气API调用成功")
+                    return json.dumps(result, ensure_ascii=False)
+        except Exception as e:
+            print(f"[WARN] 高德天气API调用失败: {e}")
+
+        # 2. API失败，使用本地数据
+        print(f"[INFO] 使用本地天气数据: {city}")
         weather_data = {
             "大理": {"condition": "晴", "temp_high": 25, "temp_low": 15, "humidity": 50, "wind": "南风"},
             "丽江": {"condition": "多云", "temp_high": 23, "temp_low": 12, "humidity": 45, "wind": "西南风"},
