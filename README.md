@@ -7,12 +7,14 @@
 方向一：Agentic AI 原生开发
 
 ## 技术栈
-- AI IDE: Trae CN
-- LLM: 智谱AI (GLM-4)
+- AI IDE: Claude Code
+- LLM: 智谱AI
 - 框架：LangGraph
 - 向量数据库：ChromaDB
 - 容器：Docker
-- ...
+- Web框架：Flask
+- Embedding模型：智谱AI Embedding-2
+- 编程语言：Python 3.13
 
 ## 目录结构
 ```
@@ -48,7 +50,7 @@ src/
 pip install -r requirements.txt
 ```
 
-2. 环境变量配置（⚠️ 不硬编码 API Key）
+2. 环境变量配置
 ```bash
 export FLIGGY_API_KEY="your_fliggy_api_key"
 export AMAP_API_KEY="your_amap_api_key"
@@ -67,4 +69,4 @@ python main.py --mode api
 ## 项目状态
 - [x] Proposal
 - [x] MVP
-- [ ] Final
+- [x] Final
