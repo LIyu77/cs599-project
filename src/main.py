@@ -38,11 +38,11 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
         plan_type: 方案类型
     """
     if not plan:
-        print(f"\n❌ {plan_type}方案生成失败")
+        print(f"\n[FAIL] {plan_type}方案生成失败")
         return
 
     print(f"\n{'='*60}")
-    print(f"📋 {plan.get('plan_name', plan_type + '方案')}")
+    print(f"[PLAN] {plan.get('plan_name', plan_type + '方案')}")
     print(f"{'='*60}")
     print(f"类型: {plan.get('plan_type', plan_type)}")
     print(f"预算: ¥{plan.get('total_budget', 0):.0f}")
@@ -51,7 +51,7 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
     transport = plan.get('transport', {})
     if transport:
         choice = transport.get('choice', {})
-        print(f"\n🚗 交通方案:")
+        print(f"\n[TRANSPORT] 交通方案:")
         if choice:
             print(f"   - {choice.get('train_no', choice.get('flight_no', 'N/A'))}")
             print(f"   - {choice.get('departure', '')} -> {choice.get('destination', '')}")
@@ -63,7 +63,7 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
     accommodation = plan.get('accommodation', {})
     if accommodation:
         choice = accommodation.get('choice', {})
-        print(f"\n🏨 住宿方案:")
+        print(f"\n[HOTEL] 住宿方案:")
         if choice:
             print(f"   - {choice.get('name', 'N/A')}")
             print(f"   - 类型: {choice.get('type', 'N/A')}")
@@ -75,7 +75,7 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
     dining = plan.get('dining', {})
     if dining:
         choices = dining.get('choices', [])
-        print(f"\n🍽️ 餐厅推荐:")
+        print(f"\n[FOOD] 餐厅推荐:")
         for i, restaurant in enumerate(choices, 1):
             print(f"   {i}. {restaurant.get('name', 'N/A')}")
             print(f"      - 菜系: {restaurant.get('cuisine', 'N/A')}")
@@ -87,7 +87,7 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
     attractions = plan.get('attractions', {})
     if attractions:
         choices = attractions.get('choices', [])
-        print(f"\n🎯 景点推荐:")
+        print(f"\n[ATTRACTION] 景点推荐:")
         for i, attraction in enumerate(choices, 1):
             print(f"   {i}. {attraction.get('name', 'N/A')}")
             print(f"      - 类型: {attraction.get('type', 'N/A')}")
@@ -98,7 +98,7 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
     # 行程安排
     itinerary = plan.get('itinerary', [])
     if itinerary:
-        print(f"\n📅 行程安排:")
+        print(f"\n[ITINERARY] 行程安排:")
         for day in itinerary:
             print(f"\n   {day.get('date', f"第{day.get('day', 0)}天")}:")
             for activity in day.get('activities', []):
@@ -108,13 +108,13 @@ def print_plan(plan: Dict[str, Any], plan_type: str):
 
     # 特色亮点
     if 'highlights' in plan:
-        print(f"\n✨ 方案亮点:")
+        print(f"\n[HIGHLIGHT] 方案亮点:")
         for highlight in plan['highlights']:
             print(f"   • {highlight}")
 
     # 省钱贴士
     if 'tips' in plan:
-        print(f"\n💰 省钱贴士:")
+        print(f"\n[TIP] 省钱贴士:")
         for tip in plan['tips']:
             print(f"   • {tip}")
 
@@ -138,7 +138,7 @@ def print_budget_analysis(budget_analysis: Dict[str, Any]):
         return
 
     print(f"\n{'='*60}")
-    print(f"💰 预算分析")
+    print(f"[BUDGET] 预算分析")
     print(f"{'='*60}")
 
     expenses = budget_analysis.get('expenses', {})
@@ -159,9 +159,9 @@ def print_budget_analysis(budget_analysis: Dict[str, Any]):
 
     if is_over:
         over_amount = budget_analysis.get('over_amount', 0)
-        print(f"⚠️ 超出预算: ¥{over_amount:.0f}")
+        print(f"[WARNING] 超出预算: ¥{over_amount:.0f}")
     else:
-        print(f"✅ 在预算内，剩余: ¥{budget - total:.0f}")
+        print(f"[OK] 在预算内，剩余: ¥{budget - total:.0f}")
 
     suggestions = budget_analysis.get('suggestions', [])
     if suggestions:
@@ -202,8 +202,8 @@ def run_interactive():
     if not user_id:
         user_id = "default_user"
 
-    print(f"\n🚀 开始规划旅行: {departure} -> {destination}")
-    print(f"📅 日期: {date}, 天数: {days}天, 预算: ¥{budget}")
+    print(f"\n[START] 开始规划旅行: {departure} -> {destination}")
+    print(f"[INFO] 日期: {date}, 天数: {days}天, 预算: ¥{budget}")
 
     # 创建初始状态
     state = create_initial_state(
@@ -222,7 +222,7 @@ def run_interactive():
     result = graph.run(state)
 
     # 打印结果
-    print(f"\n✅ 规划完成！")
+    print(f"\n[DONE] 规划完成！")
     print(f"执行日志:")
     for log in result.execution_log[-5:]:  # 显示最后5条日志
         print(f"   {log}")
@@ -245,7 +245,7 @@ def run_interactive():
         filename = f"travel_plan_{destination}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(result.to_dict(), f, ensure_ascii=False, indent=2)
-        print(f"✅ 结果已保存到: {filename}")
+        print(f"[OK] 结果已保存到: {filename}")
 
 
 def run_api_server():
@@ -337,9 +337,9 @@ def run_api_server():
         return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
     # 启动服务器
-    print("🚀 启动API服务器...")
-    print("📡 API端点: http://localhost:5000")
-    print("📋 可用接口:")
+    print("[START] 启动API服务器...")
+    print("[API] API端点: http://localhost:5000")
+    print("[INFO] 可用接口:")
     print("   - POST /api/plan - 创建旅行规划")
     print("   - GET /api/memory/<user_id> - 获取用户记忆")
     print("   - DELETE /api/memory/<user_id> - 清除用户记忆")
