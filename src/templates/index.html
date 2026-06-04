@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多智能体旅行规划系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading p { color: #666; font-size: 1.1rem; }
+
+        /* 方案展示 */
+        .plans { display: none; }
+        .plan-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .plan-tab {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: #fff;
+        }
+        .plan-tab:hover { border-color: #667eea; }
+        .plan-tab.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: #fff;
+        }
+        .plan-tab .price {
+            display: block;
+            font-size: 1.3rem;
+            margin-top: 4px;
+            color: #667eea;
+        }
+        .plan-tab.active .price { color: #fff; }
+        .plan-content { display: none; }
+        .plan-content.active { display: block; }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+            margin: 20px 0 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .info-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .info-label {
+            width: 100px;
+            color: #888;
+            flex-shrink: 0;
+        }
+        .info-value { color: #333; flex: 1; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-eco { background: #e8f5e9; color: #2e7d32; }
+        .badge-quality { background: #fff3e0; color: #e65100; }
+        .badge-efficient { background: #e3f2fd; color: #1565c0; }
+        .itinerary-day {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 10px 0;
+        }
+        .itinerary-day h4 { color: #667eea; margin-bottom: 10px; }
+        .activity {
+            display: flex;
+            padding: 6px 0;
+        }
+        .activity-time {
+            width: 120px;
+            color: #888;
+            flex-shrink: 0;
+        }
+        .tips-list { list-style: none; padding: 0; }
+        .tips-list li {
+            padding: 8px 0 8px 24px;
+            position: relative;
+            color: #555;
+        }
+        .tips-list li::before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* 预算分析 */
+        .budget-bar {
+            display: flex;
+            height: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .budget-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .budget-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .error-msg {
+            background: #ffebee;
+            color: #c62828;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 多智能体旅行规划系统</h1>
+
+        <div class="card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>目的地</label>
+                    <input type="text" id="destination" placeholder="如：大理" value="大理">
+                </div>
+                <div class="form-group">
+                    <label>出发地</label>
+                    <input type="text" id="departure" placeholder="如：北京" value="北京">
+                </div>
+                <div class="form-group">
+                    <label>出发日期</label>
+                    <input type="date" id="date">
+                </div>
+                <div class="form-group">
+                    <label>旅行天数</label>
+                    <select id="days">
+                        <option value="1">1天</option>
+                        <option value="2">2天</option>
+                        <option value="3" selected>3天</option>
+                        <option value="4">4天</option>
+                        <option value="5">5天</option>
+                        <option value="7">7天</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>预算（元）</label>
+                    <input type="number" id="budget" placeholder="5000" value="5000">
+                </div>
+            </div>
+            <button class="btn" id="submitBtn" onclick="startPlanning()">🚀 开始智能规划</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loadingText">正在规划中，请稍候...</p>
+            <p style="color:#999; font-size:0.9rem; margin-top:10px;">7个AI智能体正在并行工作</p>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div id="resultArea" style="display:none;">
+            <!-- 预算分析 -->
+            <div class="card" id="budgetCard">
+                <h3 style="margin-bottom:16px;">💰 预算分析</h3>
+                <div id="budgetContent"></div>
+            </div>
+
+            <!-- 三套方案 -->
+            <div class="card plans" id="plansCard">
+                <h3 style="margin-bottom:16px;">📋 三套旅行方案</h3>
+                <div class="plan-tabs" id="planTabs"></div>
+                <div id="planContents"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置默认日期为明天
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 7);
+        document.getElementById('date').value = tomorrow.toISOString().split('T')[0];
+
+        const planMeta = {
+            economic: { label: '经济实惠型', badge: 'badge-eco', icon: '💰' },
+            quality:  { label: '品质尊享型', badge: 'badge-quality', icon: '⭐' },
+            efficient: { label: '高效畅游型', badge: 'badge-efficient', icon: '⚡' }
+        };
+
+        async function startPlanning() {
+            const destination = document.getElementById('destination').value.trim();
+            const departure = document.getElementById('departure').value.trim();
+            const date = document.getElementById('date').value;
+            const days = parseInt(document.getElementById('days').value);
+            const budget = parseFloat(document.getElementById('budget').value);
+
+            if (!destination) { alert('请输入目的地'); return; }
+            if (!date) { alert('请选择出发日期'); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 规划中...';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultArea').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+
+            // 模拟进度提示
+            const tips = [
+                '目的地查询Agent正在获取坐标和天气...',
+                '交通规划Agent正在查询航班和火车...',
+                '食宿筛选Agent正在搜索酒店和餐厅（Function Calling）...',
+                '预算核算Agent正在计算费用...',
+                '经济型方案Agent正在生成低成本方案...',
+                '品质型方案Agent正在生成高品质方案...',
+                '高效型方案Agent正在生成最优时间方案...',
+                '记忆模块正在保存偏好...'
+            ];
+            let tipIdx = 0;
+            const tipTimer = setInterval(() => {
+                document.getElementById('loadingText').textContent = tips[tipIdx % tips.length];
+                tipIdx++;
+            }, 3000);
+
+            try {
+                const resp = await fetch('/api/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ destination, departure, date, days, budget })
+                });
+                const result = await resp.json();
+
+                clearInterval(tipTimer);
+
+                if (result.success) {
+                    renderResult(result.data);
+                } else {
+                    showError(result.error || '规划失败');
+                }
+            } catch (e) {
+                clearInterval(tipTimer);
+                showError('请求失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 开始智能规划';
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = '❌ ' + msg;
+            el.style.display = 'block';
+        }
+
+        function renderResult(data) {
+            document.getElementById('resultArea').style.display = 'block';
+            renderBudget(data.budget_analysis);
+            renderPlans(data);
+        }
+
+        function renderBudget(budget) {
+            if (!budget || !budget.expenses) {
+                document.getElementById('budgetCard').style.display = 'none';
+                return;
+            }
+            document.getElementById('budgetCard').style.display = 'block';
+            const exp = budget.expenses;
+            const total = budget.total || 1;
+            const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a'];
+            const labels = ['交通','住宿','餐饮','景点','其他'];
+            const values = [exp.transport, exp.accommodation, exp.dining, exp.attractions, exp.others || 0];
+
+            let barHtml = '<div class="budget-bar">';
+            values.forEach((v, i) => {
+                const pct = (v / total * 100).toFixed(1);
+                if (v > 0) barHtml += `<div class="budget-segment" style="width:${pct}%;background:${colors[i]}">${pct}%</div>`;
+            });
+            barHtml += '</div>';
+
+            let legendHtml = '<div class="budget-legend">';
+            values.forEach((v, i) => {
+                legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div>${labels[i]}: ¥${v.toFixed(0)}</div>`;
+            });
+            legendHtml += '</div>';
+
+            const status = budget.is_over_budget
+                ? `<p style="color:#c62828;margin-top:12px;font-weight:600;">⚠️ 超出预算 ¥${budget.over_amount.toFixed(0)}</p>`
+                : `<p style="color:#2e7d32;margin-top:12px;font-weight:600;">✅ 在预算内，剩余 ¥${(budget.budget - budget.total).toFixed(0)}</p>`;
+
+            const suggestions = (budget.suggestions || []).map(s => `<li style="color:#555;padding:4px 0;">• ${s}</li>`).join('');
+
+            document.getElementById('budgetContent').innerHTML = `
+                <div class="info-row"><span class="info-label">总费用</span><span class="info-value" style="font-size:1.3rem;font-weight:700;color:#667eea;">¥${budget.total.toFixed(0)}</span></div>
+                <div class="info-row"><span class="info-label">用户预算</span><span class="info-value">¥${budget.budget.toFixed(0)}</span></div>
+                ${barHtml}${legendHtml}${status}
+                ${suggestions ? '<ul style="list-style:none;padding:0;margin-top:8px;">' + suggestions + '</ul>' : ''}
+            `;
+        }
+
+        function renderPlans(data) {
+            const plans = {
+                economic: data.economic_plan,
+                quality: data.quality_plan,
+                efficient: data.efficient_plan
+            };
+
+            // 渲染tabs
+            let tabsHtml = '';
+            let contentsHtml = '';
+            let first = true;
+
+            for (const [key, plan] of Object.entries(plans)) {
+                if (!plan || Object.keys(plan).length === 0) continue;
+                const meta = planMeta[key];
+                const active = first ? 'active' : '';
+                tabsHtml += `<div class="plan-tab ${active}" onclick="switchPlan('${key}')">
+                    ${meta.icon} ${meta.label}
+                    <span class="price">¥${(plan.total_budget || 0).toFixed(0)}</span>
+                </div>`;
+                contentsHtml += `<div class="plan-content ${active}" id="plan-${key}">${renderSinglePlan(plan, meta)}</div>`;
+                first = false;
+            }
+
+            document.getElementById('planTabs').innerHTML = tabsHtml;
+            document.getElementById('planContents').innerHTML = contentsHtml;
+            document.getElementById('plansCard').style.display = 'block';
+        }
+
+        function renderSinglePlan(plan, meta) {
+            let html = '';
+
+            // 交通
+            if (plan.transport && plan.transport.choice) {
+                const t = plan.transport.choice;
+                html += `<div class="section-title">🚗 交通方案</div>`;
+                html += `<div class="info-row"><span class="info-label">方案</span><span class="info-value">${t.train_no || t.flight_no || 'N/A'} (${t.airline || t.train_type || ''})</span></div>`;
+                html += `<div class="info-row"><span class="info-label">路线</span><span class="info-value">${t.departure || ''} → ${t.destination || ''}</span></div>`;
+                html += `<div class="info-row"><span class="info-label">时长</span><span class="info-value">${t.duration || 'N/A'}</span></div>`;
+                html += `<div class="info-row"><span class="info-label">价格</span><span class="info-value" style="font-weight:600;color:#667eea;">¥${t.price || 0}</span></div>`;
+                if (plan.transport.reason) html += `<div class="info-row"><span class="info-label">理由</span><span class="info-value">${plan.transport.reason}</span></div>`;
+            }
+
+            // 住宿
+            if (plan.accommodation && plan.accommodation.choice) {
+                const h = plan.accommodation.choice;
+                html += `<div class="section-title">🏨 住宿方案</div>`;
+                html += `<div class="info-row"><span class="info-label">酒店</span><span class="info-value">${h.name || 'N/A'} <span class="badge ${meta.badge}">${h.type || ''}</span></span></div>`;
+                html += `<div class="info-row"><span class="info-label">评分</span><span class="info-value">⭐ ${h.rating || 'N/A'}</span></div>`;
+                html += `<div class="info-row"><span class="info-label">价格</span><span class="info-value" style="font-weight:600;color:#667eea;">¥${h.price_per_night || 0}/晚</span></div>`;
+            }
+
+            // 餐厅
+            if (plan.dining && plan.dining.choices) {
+                html += `<div class="section-title">🍽️ 餐厅推荐</div>`;
+                plan.dining.choices.forEach((r, i) => {
+                    html += `<div class="info-row"><span class="info-label">${i+1}. ${r.name}</span><span class="info-value">${r.cuisine || ''} | 人均¥${r.avg_price || 0} | ⭐${r.rating || ''}</span></div>`;
+                });
+            }
+
+            // 景点
+            if (plan.attractions && plan.attractions.choices) {
+                html += `<div class="section-title">🎯 景点推荐</div>`;
+                plan.attractions.choices.forEach((a, i) => {
+                    html += `<div class="info-row"><span class="info-label">${i+1}. ${a.name}</span><span class="info-value">${a.type || ''} | ⭐${a.rating || ''} | 门票¥${a.price || 0}</span></div>`;
+                });
+            }
+
+            // 行程
+            if (plan.itinerary && plan.itinerary.length > 0) {
+                html += `<div class="section-title">📅 行程安排</div>`;
+                plan.itinerary.forEach(day => {
+                    html += `<div class="itinerary-day"><h4>${day.date || '第' + day.day + '天'}</h4>`;
+                    (day.activities || []).forEach(act => {
+                        html += `<div class="activity"><span class="activity-time">${act.time || ''}</span><span>${act.activity || ''} ${act.location ? '(' + act.location + ')' : ''}</span></div>`;
+                    });
+                    html += `</div>`;
+                });
+            }
+
+            // 亮点/贴士
+            const tips = plan.highlights || plan.tips || plan.time_saving_tips;
+            if (tips) {
+                html += `<div class="section-title">💡 贴士</div>`;
+                html += `<ul class="tips-list">${tips.map(t => `<li>${t}</li>`).join('')}</ul>`;
+            }
+
+            return html;
+        }
+
+        function switchPlan(key) {
+            document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.plan-content').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('plan-' + key).classList.add('active');
+        }
+    </script>
+</body>
+</html>
