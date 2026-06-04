@@ -94,7 +94,7 @@ class AccommodationAgent(BaseAgent):
                 })
 
             # 2. 直接调用工具获取餐厅数据（包含早餐、午餐、晚餐推荐）
-            restaurants_result = json.loads(search_restaurants(destination, 5))
+            restaurants_result = json.loads(search_restaurants(destination, 8))
             restaurants = []
             for r in restaurants_result:
                 restaurants.append({
@@ -106,8 +106,8 @@ class AccommodationAgent(BaseAgent):
                     "address": r.get("address", ""),
                 })
 
-            # 3. 直接调用工具获取景点数据（7个景点）
-            attractions_result = json.loads(search_attractions(destination, 7))
+            # 3. 直接调用工具获取景点数据（12个景点）
+            attractions_result = json.loads(search_attractions(destination, 12))
             attractions = []
             for a in attractions_result:
                 attractions.append({

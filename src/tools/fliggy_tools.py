@@ -9,6 +9,7 @@ from datetime import datetime
 
 # 导入扩展城市数据
 from .city_data import EXTENDED_CITY_DB
+from .city_data_v2 import EXTENDED_CITY_DB as EXTENDED_CITY_DB_V2
 
 
 # 目的地知识库（核心城市）
@@ -745,36 +746,48 @@ DESTINATION_DB = {
 
 def _get_city_data(city: str) -> Dict[str, Any]:
     """获取城市数据，如果没有则生成默认数据"""
-    # 1. 先在核心知识库中查找
-    if city in DESTINATION_DB:
-        return DESTINATION_DB[city]
+    # 1. 优先在V2扩展知识库中查找（数据最丰富）
+    if city in EXTENDED_CITY_DB_V2:
+        return EXTENDED_CITY_DB_V2[city]
 
-    # 2. 在扩展知识库中查找
+    # 2. 在V1扩展知识库中查找
     if city in EXTENDED_CITY_DB:
         return EXTENDED_CITY_DB[city]
 
-    # 3. 模糊匹配核心知识库
-    for key in DESTINATION_DB:
-        if key in city or city in key:
-            return DESTINATION_DB[key]
+    # 3. 在核心知识库中查找
+    if city in DESTINATION_DB:
+        return DESTINATION_DB[city]
 
-    # 4. 模糊匹配扩展知识库
+    # 4. 模糊匹配V2扩展知识库
+    for key in EXTENDED_CITY_DB_V2:
+        if key in city or city in key:
+            return EXTENDED_CITY_DB_V2[key]
+
+    # 5. 模糊匹配V1扩展知识库
     for key in EXTENDED_CITY_DB:
         if key in city or city in key:
             return EXTENDED_CITY_DB[key]
 
-    # 5. 生成默认数据
+    # 6. 模糊匹配核心知识库
+    for key in DESTINATION_DB:
+        if key in city or city in key:
+            return DESTINATION_DB[key]
+
+    # 7. 生成默认数据（增加餐厅和景点数量）
     return {
         "province": city,
         "hotels": [
-            {"name": f"{city}国际大酒店", "type": "高档型", "price_per_night": 580, "rating": 4.6, "facilities": ["WiFi", "停车场", "餐厅", "健身房"], "address": f"{city}市中心区1号"},
-            {"name": f"{city}如家酒店", "type": "舒适型", "price_per_night": 280, "rating": 4.3, "facilities": ["WiFi", "停车场", "早餐"], "address": f"{city}市中心区2号"},
-            {"name": f"{city}青年旅舍", "type": "经济型", "price_per_night": 98, "rating": 4.2, "facilities": ["WiFi", "公共厨房"], "address": f"{city}市中心区3号"},
+            {"name": f"{city}国际大酒店", "type": "高档型", "price_per_night": 580, "rating": 4.6, "facilities": ["WiFi", "停车场", "餐厅", "健身房"]},
+            {"name": f"{city}如家酒店", "type": "舒适型", "price_per_night": 280, "rating": 4.3, "facilities": ["WiFi", "停车场", "早餐"]},
+            {"name": f"{city}青年旅舍", "type": "经济型", "price_per_night": 98, "rating": 4.2, "facilities": ["WiFi", "公共厨房"]},
         ],
         "restaurants": [
-            {"name": f"{city}特色餐厅", "cuisine": "地方菜", "avg_price": 78, "rating": 4.6, "specialties": ["招牌菜1", "招牌菜2", "招牌菜3"], "address": f"{city}市中心区4号"},
-            {"name": f"{city}老字号小吃", "cuisine": "小吃", "avg_price": 38, "rating": 4.5, "specialties": ["特色小吃1", "特色小吃2"], "address": f"{city}市中心区5号"},
-            {"name": f"{city}美食广场", "cuisine": "综合", "avg_price": 55, "rating": 4.4, "specialties": ["各地美食"], "address": f"{city}市中心区6号"},
+            {"name": f"{city}特色餐厅", "cuisine": "地方菜", "avg_price": 78, "rating": 4.6, "specialties": ["招牌菜1", "招牌菜2", "招牌菜3"]},
+            {"name": f"{city}老字号小吃", "cuisine": "小吃", "avg_price": 38, "rating": 4.5, "specialties": ["特色小吃1", "特色小吃2"]},
+            {"name": f"{city}美食广场", "cuisine": "综合", "avg_price": 55, "rating": 4.4, "specialties": ["各地美食"]},
+            {"name": f"{city}夜市小吃", "cuisine": "夜市", "avg_price": 30, "rating": 4.4, "specialties": ["烧烤", "小龙虾", "啤酒"]},
+            {"name": f"{city}火锅店", "cuisine": "火锅", "avg_price": 88, "rating": 4.5, "specialties": ["鸳鸯锅", "毛肚", "鸭肠"]},
+            {"name": f"{city}面馆", "cuisine": "面食", "avg_price": 25, "rating": 4.4, "specialties": ["牛肉面", "馄饨", "水饺"]},
         ],
         "attractions": [
             {"name": f"{city}著名景点1", "type": "风景名胜", "price": 60, "rating": 4.8, "description": f"{city}最著名的景点"},
@@ -784,6 +797,14 @@ def _get_city_data(city: str) -> Dict[str, Any]:
             {"name": f"{city}博物馆", "type": "博物馆", "price": 0, "rating": 4.4, "description": f"{city}地方博物馆"},
             {"name": f"{city}古街", "type": "历史街区", "price": 0, "rating": 4.5, "description": f"{city}传统商业街"},
             {"name": f"{city}广场", "type": "城市地标", "price": 0, "rating": 4.4, "description": f"{city}市中心广场"},
+            {"name": f"{city}寺庙", "type": "佛教圣地", "price": 20, "rating": 4.4, "description": f"{city}著名寺庙"},
+            {"name": f"{city}大学", "type": "高校参观", "price": 0, "rating": 4.3, "description": f"{city}知名大学"},
+            {"name": f"{city}步行街", "type": "购物商圈", "price": 0, "rating": 4.4, "description": f"{city}商业中心"},
+            {"name": f"{city}湿地公园", "type": "自然生态", "price": 30, "rating": 4.4, "description": f"{city}生态湿地"},
+            {"name": f"{city}古镇", "type": "古镇风情", "price": 50, "rating": 4.5, "description": f"{city}周边古镇"},
+            {"name": f"{city}夜景", "type": "城市景观", "price": 0, "rating": 4.5, "description": f"{city}最美夜景"},
+            {"name": f"{city}美食街", "type": "美食街区", "price": 0, "rating": 4.4, "description": f"{city}美食聚集地"},
+            {"name": f"{city}主题乐园", "type": "主题公园", "price": 150, "rating": 4.4, "description": f"{city}主题乐园"},
         ],
     }
 
@@ -875,7 +896,7 @@ def search_hotels(city: str, check_in: str, check_out: str, count: int = 3) -> s
     return json.dumps(hotels, ensure_ascii=False, indent=2)
 
 
-def search_restaurants(city: str, count: int = 3) -> str:
+def search_restaurants(city: str, count: int = 6) -> str:
     """搜索餐厅（包含早餐、午餐、晚餐推荐）"""
     city_data = _get_city_data(city)
     restaurants = city_data["restaurants"][:count]
@@ -890,7 +911,7 @@ def search_restaurants(city: str, count: int = 3) -> str:
     return json.dumps(restaurants, ensure_ascii=False, indent=2)
 
 
-def search_attractions(city: str, count: int = 7) -> str:
+def search_attractions(city: str, count: int = 12) -> str:
     """搜索景点"""
     city_data = _get_city_data(city)
     attractions = city_data["attractions"][:count]
