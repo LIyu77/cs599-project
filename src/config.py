@@ -7,21 +7,39 @@ from dataclasses import dataclass
 from typing import Optional
 
 
+def get_env_required(key: str) -> str:
+    """获取必需的环境变量，不存在则抛出异常"""
+    value = os.getenv(key)
+    if not value:
+        raise EnvironmentError(
+            f"环境变量 {key} 未设置。请先运行:\n"
+            f"  Windows: set {key}=your_value\n"
+            f"  Linux/Mac: export {key}=your_value"
+        )
+    return value
+
+
 @dataclass
 class APIConfig:
-    """API配置"""
+    """API配置 - 从环境变量读取"""
     # 飞猪API
-    FLIGGY_API_KEY: str = "sk-NE0H98jhcZ91PxNHXV6NNkbQSnQGndzK"
+    FLIGGY_API_KEY: str = ""
 
     # 高德地图API
-    AMAP_API_KEY: str = "b9abcb9b529950874961df8bb236cc66"
+    AMAP_API_KEY: str = ""
 
     # 智谱AI API
-    ZHIPU_API_KEY: str = "71e299e253844718aeaa6a74cb033752.7TViGw1pvSLlz3cd"
+    ZHIPU_API_KEY: str = ""
 
     # Chroma向量数据库配置
     CHROMA_PERSIST_DIR: str = "./chroma_db"
     CHROMA_COLLECTION_NAME: str = "travel_preferences"
+
+    def __post_init__(self):
+        """初始化时从环境变量读取API密钥"""
+        self.FLIGGY_API_KEY = get_env_required("FLIGGY_API_KEY")
+        self.AMAP_API_KEY = get_env_required("AMAP_API_KEY")
+        self.ZHIPU_API_KEY = get_env_required("ZHIPU_API_KEY")
 
 
 @dataclass

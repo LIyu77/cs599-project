@@ -50,12 +50,33 @@ src/
 pip install -r requirements.txt
 ```
 
-2. 环境变量配置
+2. 环境变量配置（⚠️ 必填，不配置无法启动）
+
+复制 `.env.example` 为 `.env` 并填入你的API密钥：
 ```bash
+# 复制配置文件
+cp .env.example .env
+
+# 编辑 .env 文件，填入真实的API密钥
+```
+
+或者直接设置环境变量：
+```bash
+# Linux/Mac
 export FLIGGY_API_KEY="your_fliggy_api_key"
 export AMAP_API_KEY="your_amap_api_key"
 export ZHIPU_API_KEY="your_zhipu_api_key"
+
+# Windows
+set FLIGGY_API_KEY=your_fliggy_api_key
+set AMAP_API_KEY=your_amap_api_key
+set ZHIPU_API_KEY=your_zhipu_api_key
 ```
+
+API密钥申请地址：
+- 飞猪API：需要企业资质
+- 高德API：https://console.amap.com/
+- 智谱AI：https://open.bigmodel.cn/
 
 3. 启动步骤
 ```bash
